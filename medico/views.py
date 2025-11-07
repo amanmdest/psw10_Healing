@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.messages import constants
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from paciente.models import Consulta, Documento
 from . models import Especialidades, DadosMedico, DatasAbertas, is_medico
 
@@ -50,7 +50,8 @@ def cadastro_medico(request):
         messages.add_message(request, constants.SUCCESS, 'Cadastro médico realizado com sucesso.')
 
         return redirect('/medicos/abrir_horario')
-    
+
+
 @login_required
 def abrir_horario(request):
 
@@ -83,18 +84,37 @@ def abrir_horario(request):
         messages.add_message(request, constants.SUCCESS, 'Horário cadastrado com sucesso.')
         return redirect('/medicos/abrir_horario')
 
+
+@login_required
+def deletar_horario(request, id_horario):
+    horario = DatasAbertas.objects.get(id=id_horario)
+    horario.delete()
+
+    messages.add_message(request, constants.SUCCESS, 'Horário removido com sucesso!')
+    return redirect('/medicos/abrir_horario')
+
+
 @login_required    
 def consultas_medico(request):
     if not is_medico(request.user):
         messages.add_message(request, constants.WARNING, 'Somente médicos podem acessar essa página.')
         return redirect('/usuarios/sair')
     
-    hoje = datetime.now().date()
+    hoje = date.today()
 
-    consultas_hoje = Consulta.objects.filter(data_aberta__user=request.user).filter(data_aberta__data__gte=hoje).filter(data_aberta__data__lt=hoje + timedelta(days=1))
-    consultas_restantes = Consulta.objects.exclude(id__in=consultas_hoje.values('id')).filter(data_aberta__user=request.user)
+    consultas_hoje = Consulta.objects.filter(data_aberta__user=request.user
+                                             ).filter(data_aberta__data__gte=hoje
+                                                      ).filter(data_aberta__data__lt=hoje + timedelta(days=1))
+    
+    consultas_restantes = Consulta.objects.exclude(id__in=consultas_hoje.values('id')
+                                                   ).filter(data_aberta__user=request.user)
+    # breakpoint()
 
-    return render(request, 'consultas_medico.html', {'consultas_hoje': consultas_hoje, 'consultas_restantes': consultas_restantes, 'is_medico': is_medico(request.user)})
+    return render(request, 'consultas_medico.html', {
+        'consultas_hoje': consultas_hoje, 
+        'consultas_restantes': consultas_restantes, 
+        'is_medico': is_medico(request.user)})
+
 
 @login_required
 def consulta_area_medico(request, id_consulta):
@@ -106,7 +126,11 @@ def consulta_area_medico(request, id_consulta):
     documentos = Documento.objects.filter(consulta=consulta)
 
     if request.method == "GET":
-        return render(request, 'consulta_area_medico.html', {'consulta': consulta, 'documentos': documentos, 'is_medico': is_medico(request.user)})
+        return render(request, 'consulta_area_medico.html', {
+            'consulta': consulta, 
+            'documentos': documentos, 
+            'is_medico': is_medico(request.user)
+            })
      
     elif request.method == "POST":
         link = request.POST.get('link')
@@ -124,6 +148,7 @@ def consulta_area_medico(request, id_consulta):
 
     messages.add_message(request, constants.SUCCESS, 'Consulta inicializada com sucesso.')
     return redirect(f'/medicos/consulta_area_medico/{id_consulta}')
+
 
 @login_required
 def finalizar_consulta(request, id_consulta):

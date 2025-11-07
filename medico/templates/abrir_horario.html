@@ -20,7 +20,9 @@
             <div class="col-md-8">
 
                 <img src="{{dados_medicos.foto.url}}"  class="foto-perfil" alt="">
-                <label style="margin-left: 30px; font-size: 25px" class="p-bold">Olá, <span class="color-dark">{{request.user.username}}</span></label>
+                <label style="margin-left: 30px; font-size: 25px" class="p-bold">
+                    Olá, <span class="color-dark">{{request.user.username}}</span>
+                </label>
                 
                 <br>
                 {% if messages %}
@@ -44,9 +46,12 @@
             <div class="col-md-4">
                 <p style="font-size: 25px" class="p-bold">Seus horários:</p>
                 <ul class="list-group">
-                {% for data in datas_abertas %}
-                    <li class="list-group-item">{{data}}</li>
-                {% endfor %}
+                    {% for data in datas_abertas %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">{{data}}
+                        <a href="/medicos/deletar_horario/{{data.id}}"
+                            style="text-decoration: none; color: #EF3246;">X</a>
+                    </li>
+                    {% endfor %}
                 </ul>
             </div>
         </div>

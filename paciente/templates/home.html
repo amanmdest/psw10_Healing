@@ -53,19 +53,23 @@
                             {% else %}
                                 Aguarde uma data.
                             {% endif %} 
-                            </p>                         
+                        </p>                         
                         <a href="{% url 'escolher_horario' medico.id %}" class="btn btn-success btn-dark-color">Agendar</a>
                     </div>
                     <br>
-                {% endfor %}
-                <br>
+                    {% endfor %}
+                    <br>
+                </div>
             </div>
-        </div>
-        <div class="col-md-4">
-            <p style="font-size: 25px" class="p-bold">Lembretes</p>
-
-            <p class="bg-main-lembrete">
-                <span class="p-bold"><i class="bi bi-exclamation-triangle-fill icon-differential"></i>&nbsp&nbsp Consulta com {{medico.nome}} em {{medico.proxima_data}}</span>
+            <div class="col-md-4">
+                <p style="font-size: 25px" class="p-bold">Lembretes</p>
+                
+                <p class="bg-main-lembrete">
+                    {% if consultas %}
+                    <span class="p-bold"><i class="bi bi-exclamation-triangle-fill icon-differential"></i>&nbsp&nbsp Consulta com {{medico.nome}} em {{medico.proxima_data}}</span>
+                    {% else %}
+                    <span class="p-bold"><br></span>
+                    {% endif %} 
             </p>          
         </div>
     </div>
