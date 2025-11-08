@@ -4,18 +4,26 @@ from django.contrib import messages
 from django.contrib.messages import constants
 from datetime import date, datetime, timedelta
 from paciente.models import Consulta, Documento
-from . models import Especialidades, DadosMedico, DatasAbertas, is_medico
+from . models import Especialidade, DadosMedico, DataAberta, is_medico
 
 
 @login_required
 def cadastro_medico(request):
     if is_medico(request.user):
         messages.add_message(request, constants.WARNING, 'Você já é médico')
+        
         return redirect('/medicos/abrir_horario')
     
     if request.method == 'GET':
-        especialidades = Especialidades.objects.all()
-        return render(request, 'cadastro_medico.html', {'especialidades': especialidades, 'is_medico': is_medico(request.user)})
+        especialidades = Especialidade.objects.all()
+        
+        return render(
+            request, 'cadastro_medico.html', 
+            {'especialidades': especialidades, 
+             'is_medico': is_medico(request.user)
+             }
+        )
+    
     elif request.method == "POST":
         crm = request.POST.get('crm')
         nome = request.POST.get('nome')
@@ -47,7 +55,9 @@ def cadastro_medico(request):
         )
         dados_medico.save()
 
-        messages.add_message(request, constants.SUCCESS, 'Cadastro médico realizado com sucesso.')
+        messages.add_message(
+            request, constants.SUCCESS, 'Cadastro médico realizado com sucesso.'
+        )
 
         return redirect('/medicos/abrir_horario')
 
@@ -56,13 +66,24 @@ def cadastro_medico(request):
 def abrir_horario(request):
 
     if not is_medico(request.user):
-        messages.add_message(request, constants.WARNING, 'Somente médicos podem acessar essa página.')
+        messages.add_message(
+            request, constants.WARNING, 'Somente médicos podem acessar essa página.'
+        )
+        
         return redirect('/usuarios/sair')
 
     if request.method == "GET":
         dados_medicos = DadosMedico.objects.get(user=request.user)
-        datas_abertas = DatasAbertas.objects.filter(user=request.user)
-        return render(request, 'abrir_horario.html', {'dados_medicos': dados_medicos, 'datas_abertas': datas_abertas, 'is_medico': is_medico(request.user)})
+        datas_abertas = DataAberta.objects.filter(user=request.user)
+        
+        return render(
+            request, 
+            'abrir_horario.html', 
+            {'dados_medicos': dados_medicos, 
+             'datas_abertas': datas_abertas, 
+             'is_medico': is_medico(request.user)
+             }
+        )
 
     elif request.method == "POST":
         data = request.POST.get('data')
@@ -70,24 +91,31 @@ def abrir_horario(request):
         data_formatada = datetime.strptime(data, "%Y-%m-%dT%H:%M")
         
         if data_formatada <= datetime.now():
-            messages.add_message(request, constants.WARNING, 'A data deve ser maior ou igual a data atual.')
+            messages.add_message(
+                request, constants.WARNING, 
+                'A data deve ser maior ou igual a data atual.'
+            )
+            
             return redirect('/medicos/abrir_horario')
 
 
-        horario_abrir = DatasAbertas(
+        horario_abrir = DataAberta(
             data=data,
             user=request.user
         )
 
         horario_abrir.save()
 
-        messages.add_message(request, constants.SUCCESS, 'Horário cadastrado com sucesso.')
+        messages.add_message(
+            request, constants.SUCCESS, 'Horário cadastrado com sucesso.'
+        )
+        
         return redirect('/medicos/abrir_horario')
 
 
 @login_required
 def deletar_horario(request, id_horario):
-    horario = DatasAbertas.objects.get(id=id_horario)
+    horario = DataAberta.objects.get(id=id_horario)
     horario.delete()
 
     messages.add_message(request, constants.SUCCESS, 'Horário removido com sucesso!')
@@ -97,18 +125,24 @@ def deletar_horario(request, id_horario):
 @login_required    
 def consultas_medico(request):
     if not is_medico(request.user):
-        messages.add_message(request, constants.WARNING, 'Somente médicos podem acessar essa página.')
+        messages.add_message(
+            request, 
+            constants.WARNING, 
+            'Somente médicos podem acessar essa página.'
+        )
+        
         return redirect('/usuarios/sair')
     
     hoje = date.today()
+    consultas_hoje = Consulta.objects.filter(
+        data_aberta__user=request.user).filter(
+            data_aberta__data__gte=hoje).filter(
+                data_aberta__data__lt=hoje + timedelta(days=1)
+    )
 
-    consultas_hoje = Consulta.objects.filter(data_aberta__user=request.user
-                                             ).filter(data_aberta__data__gte=hoje
-                                                      ).filter(data_aberta__data__lt=hoje + timedelta(days=1))
-    
-    consultas_restantes = Consulta.objects.exclude(id__in=consultas_hoje.values('id')
-                                                   ).filter(data_aberta__user=request.user)
-    # breakpoint()
+    consultas_restantes = Consulta.objects.exclude(
+        id__in=consultas_hoje.values('id')).filter(
+            data_aberta__user=request.user)
 
     return render(request, 'consultas_medico.html', {
         'consultas_hoje': consultas_hoje, 
@@ -119,13 +153,19 @@ def consultas_medico(request):
 @login_required
 def consulta_area_medico(request, id_consulta):
     if not is_medico(request.user):
-        messages.add_message(request, constants.WARNING, 'Somente médicos podem acessar essa página.')
+        messages.add_message(
+            request, 
+            constants.WARNING, 
+            'Somente médicos podem acessar essa página.'
+        )
+        
         return redirect('/usuarios/sair')
     
     consulta = Consulta.objects.get(id=id_consulta)
     documentos = Documento.objects.filter(consulta=consulta)
 
     if request.method == "GET":
+        
         return render(request, 'consulta_area_medico.html', {
             'consulta': consulta, 
             'documentos': documentos, 
@@ -153,13 +193,23 @@ def consulta_area_medico(request, id_consulta):
 @login_required
 def finalizar_consulta(request, id_consulta):
     if not is_medico(request.user):
-        messages.add_message(request, constants.WARNING, 'Somente médicos podem acessar essa página.')
+        messages.add_message(
+            request, 
+            constants.WARNING, 
+            'Somente médicos podem acessar essa página.'
+        )
+        
         return redirect('/usuarios/sair')
     
     consulta = Consulta.objects.get(id=id_consulta)
 
     if request.user != consulta.data_aberta.user:
-        messages.add_message(request, constants.ERROR, 'Você não tem permissão para alterar essa consulta.')
+        messages.add_message(
+            request, 
+            constants.ERROR, 
+            'Você não tem permissão para alterar essa consulta.'
+        )
+        
         return redirect(f'/medicos/abrir_horario/')
                         
     consulta.status = 'F'
@@ -167,10 +217,16 @@ def finalizar_consulta(request, id_consulta):
 
     return redirect(f'/medicos/consulta_area_medico/{id_consulta}')
 
+
 @login_required    
 def add_documento(request, id_consulta):
     if not is_medico(request.user):
-        messages.add_message(request, constants.WARNING, 'Somente médicos podem acessar essa página.')
+        messages.add_message(
+            request, 
+            constants.WARNING, 
+            'Somente médicos podem acessar essa página.'
+        )
+        
         return redirect('/usuarios/sair')
     
     consulta = Consulta.objects.get(id=id_consulta)
@@ -197,4 +253,5 @@ def add_documento(request, id_consulta):
     documento.save()
 
     messages.add_message(request, constants.SUCCESS, 'Documento enviado com sucesso!')
+
     return redirect(f'/medicos/consulta_area_medico/{id_consulta}')

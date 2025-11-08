@@ -5,7 +5,7 @@ from datetime import datetime
 def is_medico(user):
     return DadosMedico.objects.filter(user=user).exists()
 
-class Especialidades(models.Model):
+class Especialidade(models.Model):
     especialidade = models.CharField(max_length=100)
     icone = models.ImageField(upload_to="icones", null=True, blank=True)
 
@@ -22,9 +22,9 @@ class DadosMedico(models.Model):
     rg = models.ImageField(upload_to="rgs")
     cedula_identidade_medica = models.ImageField(upload_to='cim')
     foto = models.ImageField(upload_to="fotos_perfil")
-    user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     descricao = models.TextField(null=True, blank=True)
-    especialidade = models.ForeignKey(Especialidades, on_delete=models.DO_NOTHING, null=True, blank=True)
+    especialidade = models.ForeignKey(Especialidade, on_delete=models.DO_NOTHING, null=True, blank=True)
     valor_consulta = models.FloatField(default=100)
 
     def __str__(self):
@@ -32,17 +32,21 @@ class DadosMedico(models.Model):
     
     @property
     def proxima_data(self):
-        proxima_data = DatasAbertas.objects.filter(
+        proxima_data = DataAberta.objects.filter(
             user=self.user).filter(data__gte=datetime.now()
                                     ).filter(agendado=False
                                             ).order_by('data').first() 
         
         return proxima_data
 
-class DatasAbertas(models.Model):
+class DataAberta(models.Model):
     data = models.DateTimeField()
-    user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     agendado = models.BooleanField(default=False)
+
+    class Meta:
+        verbose_name = 'DataAberta'
+        verbose_name_plural = 'DatasAbertas'
 
     def __str__(self):
         return str(self.data)

@@ -1,6 +1,6 @@
 from django.contrib import admin
-from . models import Especialidades, DadosMedico, DatasAbertas
+from . models import Especialidade, DadosMedico, DataAberta
 
-admin.site.register(Especialidades)
+admin.site.register(Especialidade)
 admin.site.register(DadosMedico)
-admin.site.register(DatasAbertas)
+admin.site.register(DataAberta)

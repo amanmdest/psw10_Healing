@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-from medico.models import DatasAbertas
+from medico.models import DataAberta
 
 class Consulta(models.Model):
     status_choices = (
@@ -10,8 +10,8 @@ class Consulta(models.Model):
         ('I', 'Iniciada')
     )
     
-    paciente = models.ForeignKey(User, on_delete=models.DO_NOTHING)
-    data_aberta = models.ForeignKey(DatasAbertas, on_delete=models.DO_NOTHING)
+    paciente = models.ForeignKey(User, on_delete=models.CASCADE)
+    data_aberta = models.ForeignKey(DataAberta, on_delete=models.CASCADE)
     status = models.CharField(max_length=1, choices=status_choices, default='A')
     link = models.URLField(null=True, blank=True)
 
@@ -19,7 +19,7 @@ class Consulta(models.Model):
         return self.paciente.username
 
 class Documento(models.Model):
-    consulta = models.ForeignKey(Consulta, on_delete=models.DO_NOTHING)
+    consulta = models.ForeignKey(Consulta, on_delete=models.CASCADE)
     titulo = models.CharField(max_length=30)
     documento = models.FileField(upload_to='documentos')
 
